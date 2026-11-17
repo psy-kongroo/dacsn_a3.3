@@ -1,0 +1,6 @@
+# Archivos de variables de entorno
+.env
+**/.env
+
+# Archivos de registro
+*.log
