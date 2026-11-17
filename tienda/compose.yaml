@@ -1,0 +1,84 @@
+
+services:
+
+  tienda:
+    image: prestashop/prestashop:9
+    container_name: tienda
+    restart: unless-stopped
+    ports:
+      - "${PUERTO:-8080}:80"
+    environment:
+      DB_SERVER: bd
+      DB_NAME: ${NOMBRE_BD}
+      DB_USER: ${USUARIO_BD}
+      DB_PASSWD: ${CONTRASENA_BD}
+      PS_INSTALL_AUTO: 1
+      PS_DOMAIN: ${DIRECCION}:${PUERTO:-8080}
+      PS_LANGUAGE: es
+      PS_COUNTRY: ES
+      PS_FOLDER_ADMIN: admin-tienda
+      PS_FOLDER_INSTALL: install-tienda
+      PS_DEV_MODE: 0
+      PS_INSTALL_DB: 1
+      PS_ERASE_DB: 0
+      PS_ENABLE_SSL: 0
+      PS_HANDLE_DYNAMIC_DOMAIN: 1
+      ADMIN_MAIL: ${CORREO_ADMIN}
+      ADMIN_PASSWD: ${CONTRASENA_ADMIN}
+    volumes:
+      - tienda_datos:/var/www/html
+    depends_on:
+      bd:
+        condition: service_healthy
+      correo:
+        condition: service_started
+    networks:
+      - interna
+
+  bd:
+    image: mariadb:11.8
+    container_name: tienda_bd
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${NOMBRE_BD}
+      MARIADB_USER: ${USUARIO_BD}
+      MARIADB_PASSWORD: ${CONTRASENA_BD}
+      MARIADB_ROOT_PASSWORD: ${CONTRASENA_BD}
+    volumes:
+      - bd_datos:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - interna
+
+  correo:
+    image: axllent/mailpit:latest
+    container_name: tienda_correo
+    restart: unless-stopped
+    ports:
+      - "${PUERTO_CORREO:-8025}:8025"
+    networks:
+      - interna
+
+  adminer:
+    image: adminer:5
+    container_name: tienda_adminer
+    restart: unless-stopped
+    profiles:
+      - herramientas
+    ports:
+      - "${PUERTO_ADMINER:-8081}:8080"
+    networks:
+      - interna
+
+volumes:
+  tienda_datos:
+  bd_datos:
+
+networks:
+  interna:
+    driver: bridge
