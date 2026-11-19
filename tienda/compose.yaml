@@ -23,8 +23,8 @@ services:
       PS_ERASE_DB: 0
       PS_ENABLE_SSL: 0
       PS_HANDLE_DYNAMIC_DOMAIN: 0
-      ADMIN_MAIL: ${CORREO_ADMIN}
-      ADMIN_PASSWD: ${CONTRASENA_ADMIN}
+      ADMIN_MAIL: ${CORREO_ADMIN:?Debes definir CORREO_ADMIN}
+      ADMIN_PASSWD: ${CONTRASENA_ADMIN:?Debes definir CONTRASENA_ADMIN}
     volumes:
       - tienda_datos:/var/www/html
     depends_on:
@@ -42,7 +42,7 @@ services:
     environment:
       MARIADB_DATABASE: ${NOMBRE_BD}
       MARIADB_USER: ${USUARIO_BD}
-      MARIADB_PASSWORD: ${CONTRASENA_BD}
+      MARIADB_PASSWORD: ${CONTRASENA_BD:?Debes definir CONTRASENA_BD}
       MARIADB_ROOT_PASSWORD: ${CONTRASENA_ROOT:?Debes definir CONTRASENA_ROOT}
     volumes:
       - bd_datos:/var/lib/mysql
