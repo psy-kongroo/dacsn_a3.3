@@ -1,0 +1,61 @@
+
+services:
+
+  web:
+    image: nginx:1.30
+    restart: unless-stopped
+    ports:
+      - "${PUERTO:-8080}:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - codigo:/var/www/html:ro
+    networks:
+      - frontal
+    depends_on:
+      - yourls
+
+  yourls:
+    image: yourls:1.10.6-fpm
+    restart: unless-stopped
+    environment:
+      YOURLS_SITE: "http://${DIRECCION}:${PUERTO:-8080}"
+      YOURLS_USER: ${USUARIO_ADMIN}
+      YOURLS_PASS: ${CONTRASENA_ADMIN:?Falta CONTRASENA_ADMIN}
+      YOURLS_DB_HOST: bd
+      YOURLS_DB_NAME: ${NOMBRE_BD}
+      YOURLS_DB_USER: ${USUARIO_BD}
+      YOURLS_DB_PASS: ${CONTRASENA_BD:?Falta CONTRASENA_BD}
+    volumes:
+      - codigo:/var/www/html
+    networks:
+      - frontal
+      - interna
+    depends_on:
+      bd:
+        condition: service_healthy
+
+  bd:
+    image: mariadb:11.8
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${NOMBRE_BD}
+      MARIADB_USER: ${USUARIO_BD}
+      MARIADB_PASSWORD: ${CONTRASENA_BD:?Falta CONTRASENA_BD}
+      MARIADB_RANDOM_ROOT_PASSWORD: "1"
+    volumes:
+      - bd-datos:/var/lib/mysql
+    networks:
+      - interna
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+networks:
+  frontal:
+  interna:
+
+volumes:
+  codigo:
+  bd-datos:
